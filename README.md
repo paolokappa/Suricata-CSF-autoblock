@@ -154,6 +154,26 @@ See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues and solution
    - Verify CSF is running: `systemctl status csf`
    - Check MIN_SEVERITY setting
 
+4. **Whitelisted IPs still generating alerts?**
+   - This is normal - Suricata still detects and logs them
+   - The blocking script will skip them (check for WHITELISTED in logs)
+   - They won't be blocked in CSF or reported to AbuseIPDB
+
+5. **Script not processing new logs after rotation?**
+   - Check if position file exists: `ls -la /var/lib/suricata/eve_position_simple`
+   - Position file is automatically reset during log rotation
+   - Manual reset: `rm -f /var/lib/suricata/eve_position_simple`
+
+4. **Whitelisted IPs still generating alerts?**
+   - This is normal - Suricata still detects and logs them
+   - The blocking script will skip them (check for WHITELISTED in logs)
+   - They won't be blocked in CSF or reported to AbuseIPDB
+
+5. **Script not processing new logs after rotation?**
+   - Check if position file exists: `ls -la /var/lib/suricata/eve_position_simple`
+   - Position file is automatically reset during log rotation
+   - Manual reset: `rm -f /var/lib/suricata/eve_position_simple`
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please:
