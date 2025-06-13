@@ -13,7 +13,7 @@
             systemctl reload suricata || systemctl restart suricata
         fi
         # Resetta la posizione per lo script di blocco
-        rm -f /var/lib/suricata/eve_position
+        rm -f /var/lib/suricata/eve_position_simple
         # Log dell'operazione
         echo "$(date): Logrotate executed" >> /var/log/suricata-logrotate.log
     endscript
