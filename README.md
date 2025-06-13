@@ -1,39 +1,33 @@
-# ??? Suricata IDS + CSF Firewall Auto-Block System
-
-<p align="center">
-  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version">
-  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
-  <img src="https://img.shields.io/badge/ubuntu-22.04%20%7C%2024.04-orange.svg" alt="Ubuntu">
-</p>
+# 🛡️ Suricata IDS + CSF Firewall Auto-Block System
 
 A complete solution for automatic intrusion detection and blocking using Suricata IDS and ConfigServer Security & Firewall (CSF).
 
-Developed by **Paolo Caparrelli** at **[GOLINE SA](https://www.goline.ch)**
+Developed by **Paolo Caparrelli** at **GOLINE SA**
 
-## ?? Features
+## 🚀 Features
 
-- ? Real-time intrusion detection with Suricata IDS
-- ? Automatic IP blocking based on alert severity
-- ? AbuseIPDB integration via [CSFToAbuseIPDB](https://github.com/paolokappa/CSFToAbuseIPDB)
-- ? Automatic Suricata rules updates
-- ? Detailed monitoring and reporting
-- ? Automatic log rotation with logrotate
-- ? Cron-based automation (runs every minute)
-- ? Zero configuration passwords - fully secure
+- 🔥 Real-time intrusion detection with Suricata IDS
+- 🛡️ Automatic IP blocking based on alert severity
+- 📊 AbuseIPDB integration via CSFToAbuseIPDB
+- ⚡ Automatic Suricata rules updates
+- 📋 Detailed monitoring and reporting
+- ⚙️ Automatic log rotation with logrotate
+- 🔧 Cron-based automation (runs every minute)
+- 🔒 Zero configuration passwords - fully secure
 
-## ?? Table of Contents
+## 📋 Table of Contents
 
-1. [Requirements](#requirements)
-2. [Quick Start](#quick-start)
-3. [Installation](#installation)
-4. [Configuration](#configuration)
-5. [Usage](#usage)
-6. [Monitoring](#monitoring)
-7. [Troubleshooting](#troubleshooting)
-8. [Contributing](#contributing)
-9. [License](#license)
+1. [Requirements](#-requirements)
+2. [Quick Start](#-quick-start)
+3. [Installation](#-installation)
+4. [Configuration](#-configuration)
+5. [Usage](#-usage)
+6. [Monitoring](#-monitoring)
+7. [Troubleshooting](#-troubleshooting)
+8. [Contributing](#-contributing)
+9. [License](#-license)
 
-## ?? Requirements
+## 💻 Requirements
 
 - Ubuntu 22.04 or 24.04
 - ConfigServer Security & Firewall (CSF) installed
@@ -41,107 +35,151 @@ Developed by **Paolo Caparrelli** at **[GOLINE SA](https://www.goline.ch)**
 - jq (JSON processor)
 - Root access
 
-### Optional (for AbuseIPDB integration)
-- [CSFToAbuseIPDB](https://github.com/paolokappa/CSFToAbuseIPDB) installed
+**Optional (for AbuseIPDB integration)**
+- CSFToAbuseIPDB installed
 - AbuseIPDB API key
 
-## ?? Quick Start
+## 🚀 Quick Start
 
-    # Clone the repository
-    git clone https://github.com/goline-sa/suricata-csf-autoblock.git
-    cd suricata-csf-autoblock
+```bash
+# Clone the repository
+git clone https://github.com/paolokappa/Suricata-CSF-autoblock.git
+cd suricata-csf-autoblock
 
-    # Run the installer
-    sudo ./install.sh
+# Run the installer
+sudo ./install.sh
+```
 
-## ?? Installation
+## 📦 Installation
 
 See [INSTALL.md](docs/INSTALL.md) for detailed installation instructions.
 
-## ?? Configuration
+## ⚙️ Configuration
 
 The system comes pre-configured with sensible defaults. Main configuration files:
 
-- **Suricata config**: /etc/suricata/suricata.yaml
-- **Blocking severity**: Edit MIN_SEVERITY in scripts/suricata-csf-block-simple.sh (default: 2)
+- **Suricata config**: `/etc/suricata/suricata.yaml`
+- **Blocking severity**: Edit `MIN_SEVERITY` in `scripts/suricata-csf-block-simple.sh` (default: 2)
 - **Network interface**: Update in Suricata config
 
 ### Severity Levels
-- 1 = HIGH (always block)
-- 2 = MEDIUM (default threshold)
-- 3 = LOW (usually false positives)
+
+- **1** = HIGH (always block)
+- **2** = MEDIUM (default threshold)
+- **3** = LOW (usually false positives)
 
 ### AbuseIPDB Integration (Optional)
 
-To enable AbuseIPDB reporting:
+If you have CSFToAbuseIPDB installed:
+1. Configure your API key in CSFToAbuseIPDB
+2. The integration will work automatically
 
-1. Install [CSFToAbuseIPDB](https://github.com/paolokappa/CSFToAbuseIPDB)
-2. Configure your API key in CSF
-3. The auto-block script will automatically use it if available
+## 🎯 Usage
 
-## ?? Usage
+### Manual Blocking Script
 
-### Monitor alerts in real-time
+```bash
+# Test the blocking script manually
+/usr/local/bin/suricata-csf-block-simple.sh
+```
 
-    suricata-monitor
+### Monitor Suricata Events
 
-### Check last hour's activity
+```bash
+# Real-time monitoring with formatted output
+/usr/local/bin/suricata-monitor
+```
 
-    suricata-monitor -H 1
+### Update Suricata Rules
 
-### View blocked IPs
+```bash
+# Manual update
+systemctl start suricata-auto-update.service
 
-    grep "BLOCKED:" /var/log/suricata-csf-block.log | tail -20
+# Check timer status
+systemctl status suricata-auto-update.timer
+```
 
-### Manual operations
+## 📊 Monitoring
 
-    # Force rule update
-    /usr/local/bin/suricata-auto-update.sh
+### Check Service Status
 
-    # Run block script manually
-    /usr/local/bin/suricata-csf-block-simple.sh
+```bash
+# Suricata status
+systemctl status suricata
 
-    # Check CSF blocks
-    csf -d
+# Check if blocking is working
+tail -f /var/log/suricata/csf-blocking.log
 
-## ?? Monitoring
+# View Suricata alerts
+tail -f /var/log/suricata/fast.log
+```
 
-The system includes a comprehensive monitoring tool that shows:
-- Alert statistics and trends
-- Top attacking IPs with their status (BLOCKED/ACTIVE/WHITELISTED)
-- Attack signatures and categories
-- Timeline of attacks
-- CSF integration status
+### Verify Cron Job
 
-## ?? File Locations
+```bash
+# Check if cron job is installed
+crontab -l | grep suricata-csf-block
+```
 
-- **Logs**: /var/log/suricata/eve.json
-- **Block log**: /var/log/suricata-csf-block.log
-- **Update log**: /var/log/suricata-auto-update.log
-- **Processed IPs**: /var/lib/suricata/processed_ips.txt
+### CSF Blocked IPs
 
-## ??? Troubleshooting
+```bash
+# View temporarily blocked IPs
+csf -t
+
+# View permanently blocked IPs
+csf -g [IP_ADDRESS]
+```
+
+## 🔧 Troubleshooting
 
 See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues and solutions.
 
-## ?? Contributing
+### Quick Checks
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. **Suricata not starting?**
+   ```bash
+   suricata -T -c /etc/suricata/suricata.yaml
+   ```
 
-## ?? Related Projects
+2. **No alerts generated?**
+   ```bash
+   # Test with a known bad pattern
+   curl http://testmynids.org/uid/index.html
+   ```
 
-- [CSFToAbuseIPDB](https://github.com/paolokappa/CSFToAbuseIPDB) - CSF to AbuseIPDB integration
+3. **IPs not being blocked?**
+   - Check `/var/log/suricata/csf-blocking.log`
+   - Verify CSF is running: `systemctl status csf`
+   - Check MIN_SEVERITY setting
 
-## ?? License
+## 🤝 Contributing
+
+Contributions are welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## ?? Authors
+## 🙏 Acknowledgments
 
-- **Paolo Caparrelli** - *Initial work* - [GOLINE SA](https://www.goline.ch)
+- Suricata IDS team for the excellent intrusion detection system
+- ConfigServer for CSF firewall
+- AbuseIPDB for threat intelligence integration
+
+## 📞 Support
+
+For issues and questions:
+- Open an issue on GitHub
+- Contact: Paolo Caparrelli at GOLINE SA
 
 ---
 
-<p align="center">
-  Made with ?? by <a href="https://www.goline.ch">GOLINE SA</a>
-</p>
+**Made with ❤️ by [GOLINE SA](https://www.goline.ch)**
