@@ -1,0 +1,41 @@
+# Logs
+*.log
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Security - Never commit these
+*.key
+*.pem
+*.crt
+*_rsa
+*_dsa
+*.p12
+*.pfx
+
+# Configuration files with potential sensitive data
+csf.conf
+*api_key*
+*secret*
+
+# Backup files
+*.backup
+*.old

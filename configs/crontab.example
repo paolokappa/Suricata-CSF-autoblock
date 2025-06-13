@@ -1,0 +1,6 @@
+# Example crontab entries for Suricata auto-block system
+# Add these lines to /etc/crontab
+
+# Suricata auto-block and logrotate
+*/30 * * * * root /usr/sbin/logrotate /etc/logrotate.d/suricata >/dev/null 2>&1
+* * * * * root /usr/local/bin/suricata-csf-block-simple.sh >/dev/null 2>&1

@@ -1,0 +1,36 @@
+# Esempio di configurazione personalizzata per Suricata
+# Copia questo file in /etc/suricata/suricata-custom.yaml e modificalo
+
+%YAML 1.1
+---
+
+# Interfaccia di rete da monitorare
+af-packet:
+  - interface: eth0    # Cambia con la tua interfaccia
+    threads: auto
+    cluster-id: 99
+    cluster-type: cluster_flow
+    defrag: yes
+
+# Output per gli alert
+outputs:
+  - eve-log:
+      enabled: yes
+      filetype: regular
+      filename: eve.json
+      types:
+        - alert:
+            payload: yes
+            payload-printable: yes
+            packet: yes
+            metadata: yes
+        - http:
+            extended: yes
+        - dns:
+            enabled: yes
+        - tls:
+            extended: yes
+        - flow:
+            enabled: yes
+        - stats:
+            enabled: yes

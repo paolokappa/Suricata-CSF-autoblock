@@ -1,0 +1,10 @@
+[Unit]
+Description=Timer per aggiornamento automatico regole Suricata ET
+Requires=suricata-auto-update.service
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

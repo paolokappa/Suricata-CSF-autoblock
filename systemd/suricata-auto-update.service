@@ -1,0 +1,9 @@
+[Unit]
+Description=Aggiornamento automatico regole Suricata ET
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/suricata-auto-update.sh
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,20 @@
+/var/log/suricata/eve.json {
+    size 100M
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root adm
+    sharedscripts
+    postrotate
+        # Metodo più affidabile: reload del servizio
+        if systemctl is-active --quiet suricata; then
+            systemctl reload suricata || systemctl restart suricata
+        fi
+        # Resetta la posizione per lo script di blocco
+        rm -f /var/lib/suricata/eve_position
+        # Log dell'operazione
+        echo "$(date): Logrotate executed" >> /var/log/suricata-logrotate.log
+    endscript
+}

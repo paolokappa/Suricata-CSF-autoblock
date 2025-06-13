@@ -1,0 +1,310 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Suricata Monitor - Analyze and display statistics from Suricata logs
+"""
+
+import json
+import sys
+from datetime import datetime, timedelta
+from collections import Counter, defaultdict
+import argparse
+import subprocess
+import socket
+import ipaddress
+
+# Colors for output
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+
+def format_number(num):
+    """Format numbers with thousand separators"""
+    return f"{num:,}"
+
+def compress_ipv6(ip):
+    """Compress IPv6 address for display"""
+    if ':' in ip:
+        try:
+            return str(ipaddress.ip_address(ip).compressed)
+        except:
+            return ip
+    return ip
+
+def get_hostname(ip):
+    """Get hostname from IP (with cache)"""
+    try:
+        return socket.gethostbyaddr(ip)[0]
+    except:
+        return ""
+
+def parse_suricata_log(log_file="/var/log/suricata/eve.json", hours=24):
+    """Read and parse Suricata log"""
+    alerts = []
+    flows = []
+    stats = {
+        'total_events': 0,
+        'total_alerts': 0,
+        'total_flows': 0
+    }
+    
+    time_threshold = datetime.now() - timedelta(hours=hours)
+    
+    try:
+        with open(log_file, 'r') as f:
+            for line in f:
+                try:
+                    event = json.loads(line.strip())
+                    stats['total_events'] += 1
+                    
+                    # Check timestamp
+                    timestamp = datetime.strptime(event['timestamp'].split('+')[0], '%Y-%m-%dT%H:%M:%S.%f')
+                    if timestamp < time_threshold:
+                        continue
+                    
+                    if event.get('event_type') == 'alert':
+                        stats['total_alerts'] += 1
+                        alerts.append({
+                            'timestamp': timestamp,
+                            'src_ip': event.get('src_ip', 'unknown'),
+                            'dest_ip': event.get('dest_ip', 'unknown'),
+                            'dest_port': event.get('dest_port', 0),
+                            'proto': event.get('proto', 'unknown'),
+                            'severity': event.get('alert', {}).get('severity', 3),
+                            'signature': event.get('alert', {}).get('signature', 'unknown'),
+                            'category': event.get('alert', {}).get('category', 'unknown'),
+                            'signature_id': event.get('alert', {}).get('signature_id', 0)
+                        })
+                    elif event.get('event_type') == 'flow':
+                        stats['total_flows'] += 1
+                        
+                except json.JSONDecodeError:
+                    continue
+                except Exception as e:
+                    continue
+                    
+    except FileNotFoundError:
+        print(f"{Colors.FAIL}Error: File {log_file} not found{Colors.END}")
+        sys.exit(1)
+    
+    return alerts, stats
+
+def analyze_alerts(alerts):
+    """Analyze alerts and generate statistics"""
+    analysis = {
+        'src_ips': Counter(),
+        'signatures': Counter(),
+        'categories': Counter(),
+        'severities': Counter(),
+        'dest_ports': Counter(),
+        'protocols': Counter(),
+        'timeline': defaultdict(int),
+        'severity_by_ip': defaultdict(lambda: defaultdict(int))
+    }
+    
+    for alert in alerts:
+        analysis['src_ips'][alert['src_ip']] += 1
+        analysis['signatures'][alert['signature']] += 1
+        analysis['categories'][alert['category']] += 1
+        analysis['severities'][alert['severity']] += 1
+        analysis['dest_ports'][alert['dest_port']] += 1
+        analysis['protocols'][alert['proto']] += 1
+        
+        # Timeline by hour
+        hour = alert['timestamp'].strftime('%Y-%m-%d %H:00')
+        analysis['timeline'][hour] += 1
+        
+        # Severity by IP
+        analysis['severity_by_ip'][alert['src_ip']][alert['severity']] += 1
+    
+    return analysis
+
+def check_ip_status(ip):
+    """Check if IP is whitelisted or blocked in CSF"""
+    # First check whitelist
+    try:
+        with open('/etc/csf/csf.allow', 'r') as f:
+            for line in f:
+                # Skip comments and empty lines
+                if line.strip().startswith('#') or not line.strip():
+                    continue
+                # Extract IP/subnet from line (before any comment)
+                entry = line.split('#')[0].strip()
+                if not entry:
+                    continue
+                
+                # Check exact match
+                if entry == ip:
+                    return "WHITELISTED"
+                
+                # Check if entry is a subnet (contains /)
+                if '/' in entry:
+                    try:
+                        # Use ipaddress module to check if IP is in subnet
+                        if ipaddress.ip_address(ip) in ipaddress.ip_network(entry, strict=False):
+                            return "WHITELISTED"
+                    except:
+                        pass
+    except:
+        pass
+    
+    # Then check if blocked
+    try:
+        result = subprocess.run(['sudo', 'csf', '-g', ip], 
+                              capture_output=True, text=True, timeout=5)
+        if ("DROP" in result.stdout or "csf.deny:" in result.stdout) and result.returncode == 0:
+            return "BLOCKED"
+        return "ACTIVE"
+    except:
+        return "UNKNOWN"
+
+def print_report(analysis, stats, hours, alerts):
+    """Print formatted report"""
+    
+    # Header
+    print(f"\n{Colors.HEADER}{Colors.BOLD}{'='*55}")
+    print(f"           SURICATA IDS MONITORING REPORT")
+    print(f"         Last {hours} hours - {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"{'='*55}{Colors.END}\n")
+    
+    # General statistics
+    print(f"{Colors.CYAN}GENERAL STATISTICS{Colors.END}")
+    print(f"|- Total Alerts: {Colors.BOLD}{format_number(len(alerts))}{Colors.END}")
+    print(f"|- Unique IPs: {Colors.BOLD}{len(analysis['src_ips'])}{Colors.END}")
+    print(f"|- Unique Signatures: {Colors.BOLD}{len(analysis['signatures'])}{Colors.END}")
+    print(f"|- Alert Rate: {Colors.BOLD}{len(alerts)/hours:.1f} alerts/hour{Colors.END}\n")
+    
+    # Severity Distribution
+    print(f"{Colors.WARNING}SEVERITY DISTRIBUTION{Colors.END}")
+    severity_names = {1: "HIGH", 2: "MEDIUM", 3: "LOW"}
+    total_alerts = sum(analysis['severities'].values())
+    if total_alerts > 0:
+        for sev in sorted(analysis['severities'].keys()):
+            count = analysis['severities'][sev]
+            percent = (count / total_alerts) * 100
+            bar = '#' * int(percent / 2)
+            print(f"|- {severity_names.get(sev, f'Level {sev}'):8} [{count:5}] {bar} {percent:.1f}%")
+    print()
+    
+    # Top 10 Attacking IPs
+    print(f"{Colors.FAIL}TOP 10 ATTACKING IPs{Colors.END}")
+    print(f"{'Rank':<5} {'IP Address':<40} {'Alerts':<8} {'Status':<12} {'Severities'}")
+    print("-" * 85)
+    
+    for i, (ip, count) in enumerate(analysis['src_ips'].most_common(10), 1):
+        status = check_ip_status(ip)
+        
+        # Color based on status
+        if status == "WHITELISTED":
+            status_color = Colors.GREEN
+        elif status == "BLOCKED":
+            status_color = Colors.FAIL
+        elif status == "ACTIVE":
+            status_color = Colors.WARNING
+        else:
+            status_color = Colors.END
+        
+        # Compress IPv6 for display
+        display_ip = compress_ipv6(ip)
+        
+        # Severity breakdown for this IP
+        sev_breakdown = []
+        for sev in sorted(analysis['severity_by_ip'][ip].keys()):
+            sev_count = analysis['severity_by_ip'][ip][sev]
+            sev_breakdown.append(f"S{sev}:{sev_count}")
+        
+        print(f"{i:<5} {display_ip:<40} {count:<8} {status_color}{status:<12}{Colors.END} {', '.join(sev_breakdown)}")
+    print()
+    
+    # Top Attack Types
+    print(f"{Colors.BLUE}TOP 10 ATTACK SIGNATURES{Colors.END}")
+    print(f"{'Count':<8} {'Signature'}")
+    print("-" * 70)
+    
+    for sig, count in analysis['signatures'].most_common(10):
+        # Truncate long signatures
+        sig_display = sig[:60] + "..." if len(sig) > 60 else sig
+        print(f"{count:<8} {sig_display}")
+    print()
+    
+    # Top Target Ports
+    print(f"{Colors.GREEN}TOP TARGET PORTS{Colors.END}")
+    print(f"{'Port':<8} {'Count':<8} {'Service'}")
+    print("-" * 40)
+    
+    port_names = {
+        22: "SSH", 80: "HTTP", 443: "HTTPS", 3306: "MySQL",
+        21: "FTP", 25: "SMTP", 110: "POP3", 143: "IMAP",
+        3389: "RDP", 8080: "HTTP-Alt", 53: "DNS"
+    }
+    
+    for port, count in analysis['dest_ports'].most_common(10):
+        service = port_names.get(port, "Unknown")
+        print(f"{port:<8} {count:<8} {service}")
+    print()
+    
+    # Timeline
+    if len(analysis['timeline']) > 0:
+        print(f"{Colors.CYAN}ALERT TIMELINE (by hour){Colors.END}")
+        max_count = max(analysis['timeline'].values())
+        for hour in sorted(analysis['timeline'].keys())[-24:]:
+            count = analysis['timeline'][hour]
+            bar_length = int((count / max_count) * 40)
+            bar = '#' * bar_length
+            print(f"{hour[-5:]} [{count:3}] {bar}")
+    print()
+    
+    # CSF Integration Status
+    print(f"{Colors.BOLD}CSF INTEGRATION STATUS{Colors.END}")
+    try:
+        with open('/var/log/suricata-csf-block.log', 'r') as f:
+            blocked_today = len([l for l in f if 'BLOCKED:' in l and datetime.now().strftime('%Y-%m-%d') in l])
+        print(f"|- IPs blocked today: {Colors.BOLD}{blocked_today}{Colors.END}")
+    except:
+        pass
+    
+    # Check if timer is active
+    try:
+        result = subprocess.run(['systemctl', 'is-active', 'cron'],
+                              capture_output=True, text=True)
+        timer_status = "Active" if result.stdout.strip() == "active" else "Inactive"
+        timer_color = Colors.GREEN if "Active" in timer_status else Colors.FAIL
+        print(f"|- Auto-block cron: {timer_color}{timer_status}{Colors.END}")
+    except:
+        pass
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Suricata IDS Monitoring Tool')
+    parser.add_argument('-H', '--hours', type=int, default=24,
+                      help='Number of hours to analyze (default: 24)')
+    parser.add_argument('-f', '--file', default='/var/log/suricata/eve.json',
+                      help='Path to Suricata eve.json log file')
+    parser.add_argument('--no-color', action='store_true',
+                      help='Disable colored output')
+    
+    args = parser.parse_args()
+    
+    if args.no_color:
+        for attr in dir(Colors):
+            if not attr.startswith('__'):
+                setattr(Colors, attr, '')
+    
+    # Parse logs
+    print(f"{Colors.BLUE}Analyzing Suricata logs...{Colors.END}")
+    alerts, stats = parse_suricata_log(args.file, args.hours)
+    
+    if not alerts:
+        print(f"{Colors.WARNING}No alerts found in the last {args.hours} hours{Colors.END}")
+        sys.exit(0)
+    
+    # Analyze
+    analysis = analyze_alerts(alerts)
+    
+    # Print report
+    print_report(analysis, stats, args.hours, alerts)
