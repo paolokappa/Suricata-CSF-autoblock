@@ -1,33 +1,33 @@
-# :shield: Suricata IDS + CSF Firewall Auto-Block System
+# 🛡️ Suricata IDS + CSF Firewall Auto-Block System
 
 A complete solution for automatic intrusion detection and blocking using Suricata IDS and ConfigServer Security & Firewall (CSF).
 
 Developed by **Paolo Caparrelli** at **GOLINE SA**
 
-## :rocket: Features
+## 🚀 Features
 
-- :fire: Real-time intrusion detection with Suricata IDS
-- :shield: Automatic IP blocking based on alert severity
-- :chart_with_upwards_trend: AbuseIPDB integration via CSFToAbuseIPDB
-- :zap: Automatic Suricata rules updates
-- :clipboard: Detailed monitoring and reporting
-- :gear: Automatic log rotation with logrotate
-- :wrench: Cron-based automation (runs every minute)
-- :lock: Zero configuration passwords - fully secure
+- 🔥 Real-time intrusion detection with Suricata IDS
+- 🛡️ Automatic IP blocking based on alert severity
+- 📊 AbuseIPDB integration via CSFToAbuseIPDB
+- ⚡ Automatic Suricata rules updates
+- 📋 Detailed monitoring and reporting
+- ⚙️ Automatic log rotation with logrotate
+- 🔧 Cron-based automation (runs every minute)
+- 🔒 Zero configuration passwords - fully secure
 
-## :clipboard: Table of Contents
+## 📋 Table of Contents
 
-1. [Requirements](#computer-requirements)
-2. [Quick Start](#rocket-quick-start)
-3. [Installation](#package-installation)
-4. [Configuration](#gear-configuration)
-5. [Usage](#dart-usage)
-6. [Monitoring](#bar_chart-monitoring)
-7. [Troubleshooting](#wrench-troubleshooting)
-8. [Contributing](#handshake-contributing)
-9. [License](#page_facing_up-license)
+1. [Requirements](#-requirements)
+2. [Quick Start](#-quick-start)
+3. [Installation](#-installation)
+4. [Configuration](#-configuration)
+5. [Usage](#-usage)
+6. [Monitoring](#-monitoring)
+7. [Troubleshooting](#-troubleshooting)
+8. [Contributing](#-contributing)
+9. [License](#-license)
 
-## :computer: Requirements
+## 💻 Requirements
 
 - Ubuntu 22.04 or 24.04
 - ConfigServer Security & Firewall (CSF) installed
@@ -39,7 +39,7 @@ Developed by **Paolo Caparrelli** at **GOLINE SA**
 - CSFToAbuseIPDB installed
 - AbuseIPDB API key
 
-## :rocket: Quick Start
+## 🚀 Quick Start
 
 ```bash
 # Clone the repository
@@ -50,11 +50,11 @@ cd suricata-csf-autoblock
 sudo ./install.sh
 ```
 
-## :package: Installation
+## 📦 Installation
 
 See [INSTALL.md](docs/INSTALL.md) for detailed installation instructions.
 
-## :gear: Configuration
+## ⚙️ Configuration
 
 The system comes pre-configured with sensible defaults. Main configuration files:
 
@@ -74,7 +74,7 @@ If you have CSFToAbuseIPDB installed:
 1. Configure your API key in CSFToAbuseIPDB
 2. The integration will work automatically
 
-## :dart: Usage
+## 🎯 Usage
 
 ### Manual Blocking Script
 
@@ -100,7 +100,7 @@ systemctl start suricata-auto-update.service
 systemctl status suricata-auto-update.timer
 ```
 
-## :bar_chart: Monitoring
+## 📊 Monitoring
 
 ### Check Service Status
 
@@ -132,7 +132,7 @@ csf -t
 csf -g [IP_ADDRESS]
 ```
 
-## :wrench: Troubleshooting
+## 🔧 Troubleshooting
 
 See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues and solutions.
 
@@ -154,7 +154,7 @@ See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues and solution
    - Verify CSF is running: `systemctl status csf`
    - Check MIN_SEVERITY setting
 
-## :handshake: Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please:
 
@@ -164,17 +164,17 @@ Contributions are welcome! Please:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## :page_facing_up: License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## :pray: Acknowledgments
+## 🙏 Acknowledgments
 
 - Suricata IDS team for the excellent intrusion detection system
 - ConfigServer for CSF firewall
 - AbuseIPDB for threat intelligence integration
 
-## :phone: Support
+## 📞 Support
 
 For issues and questions:
 - Open an issue on GitHub
@@ -182,4 +182,4 @@ For issues and questions:
 
 ---
 
-**Made with :heart: by [GOLINE SA](https://www.goline.ch)**
+**Made with ❤️ by [GOLINE SA](https://www.goline.ch)**

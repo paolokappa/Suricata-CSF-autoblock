@@ -11,6 +11,16 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_OUTPUT"
 }
 
+# Function to check if IP is whitelisted
+is_whitelisted() {
+    local ip="$1"
+    # Check if IP is in CSF allow list (including subnet matches)
+    if csf -g "$ip" 2>/dev/null | grep -q "csf.allow"; then
+        return 0  # IP is whitelisted
+    fi
+    return 1  # IP is not whitelisted
+}
+
 # Create files if not exist
 [ ! -f "$PROCESSED_IPS" ] && touch "$PROCESSED_IPS"
 [ ! -f "$STATS_FILE" ] && echo "0" > "$STATS_FILE"
@@ -42,6 +52,13 @@ if [ "$current_size" -gt "$last_pos" ]; then
             # Check if already processed
             if ! grep -q "^${ip}$" "$PROCESSED_IPS"; then
                 log_message "Checking IP: $ip (severity: $severity)"
+                
+                # IMPORTANT: Check if IP is whitelisted FIRST
+                if is_whitelisted "$ip"; then
+                    log_message "WHITELISTED: $ip - Skipping (in csf.allow)"
+                    echo "$ip" >> "$PROCESSED_IPS"
+                    continue
+                fi
                 
                 # Check if already blocked in CSF
                 if csf -g "$ip" 2>/dev/null | grep -q "No matches"; then
