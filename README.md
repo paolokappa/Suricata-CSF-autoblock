@@ -116,14 +116,6 @@ systemctl status suricata-auto-update.timer
 ```
 ```
 
-### &#x1F4CA; Enhanced Monitoring (v2.0+)
-
-The new monitoring script shows:
-- &#x1F4C8; Real-time attack statistics
-- &#x1F30D; Proper IPv6 address formatting
-- &#x1F3AF; CSF status for each IP (WHITELISTED/BLOCKED/ACTIVE)
-- &#x1F4CA; Attack categorization and severity distribution
-- &#x23F1;&#xFE0F; Hourly attack timeline
 ```
 
 ## 📊 Monitoring
@@ -147,6 +139,16 @@ tail -f /var/log/suricata/fast.log
 # Check if cron job is installed
 crontab -l | grep suricata-csf-block
 ```
+
+
+### ?? Enhanced Monitoring (v2.0+)
+
+The new monitoring script shows:
+- ?? Real-time attack statistics  
+- ?? Proper IPv6 address formatting
+- ?? CSF status for each IP (WHITELISTED/BLOCKED/ACTIVE)
+- ?? Attack categorization and severity distribution
+- ?? Hourly attack timeline
 
 ### CSF Blocked IPs
 
