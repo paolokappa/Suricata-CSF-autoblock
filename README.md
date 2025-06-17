@@ -203,3 +203,10 @@ For issues and questions:
 ---
 
 **Made with ❤️ by [GOLINE SA](https://www.goline.ch)**
+
+---
+
+## Speedtest Server Edition
+
+For Ookla Speedtest servers, use the specialized version that handles high-volume HTTP traffic intelligently.
+See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for details.
