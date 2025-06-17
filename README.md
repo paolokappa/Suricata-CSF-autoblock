@@ -113,6 +113,8 @@ systemctl start suricata-auto-update.service
 
 # Check timer status
 systemctl status suricata-auto-update.timer
+```
+```
 
 ### &#x1F4CA; Enhanced Monitoring (v2.0+)
 
