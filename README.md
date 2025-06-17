@@ -249,3 +249,29 @@ chmod +x /usr/local/bin/suricata-monitor
 ```
 
 See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for full details.
+
+---
+
+## &#x1F680; Speedtest Server Edition
+
+For Ookla Speedtest servers, use the specialized version that handles high-volume HTTP traffic intelligently.
+
+### &#x1F4E6; Quick Install for Speedtest Servers:
+```bash
+# Use the speedtest-optimized script
+cp scripts/suricata-csf-block-speedtest.sh /usr/local/bin/
+ln -sf /usr/local/bin/suricata-csf-block-speedtest.sh /usr/local/bin/suricata-csf-block-simple.sh
+
+# Install enhanced monitor
+cp scripts/suricata-monitor-enhanced.py /usr/local/bin/suricata-monitor
+chmod +x /usr/local/bin/suricata-monitor
+```
+
+### &#x1F195; New in v2.0
+- &#x1F30D; Full IPv6 support with proper address formatting
+- &#x1F4CA; Enhanced monitoring with `--debug` and `--show-all-blocked` options
+- &#x1F3AF; Intelligent scoring system for gradual threat detection
+- &#x23F0; Temporary 24h blocks instead of permanent for speedtest servers
+- &#x1F6E1;&#xFE0F; Focus on real threats, ignore legitimate speedtest traffic
+
+See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for full details.
