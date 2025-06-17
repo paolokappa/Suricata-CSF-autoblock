@@ -4,6 +4,21 @@ A complete solution for automatic intrusion detection and blocking using Suricat
 
 Developed by **Paolo Caparrelli** at **GOLINE SA**
 
+
+## &#x1F3AF; Choose Your Edition
+
+### &#x1F310; Standard Edition
+For regular servers that need robust intrusion detection and blocking.
+
+### &#x1F680; Speedtest Server Edition  
+Optimized for Ookla Speedtest servers handling high-volume HTTP traffic.
+- &#x1F3AF; Ignores legitimate speedtest traffic on ports 80, 443, 8080, 5060
+- &#x23F0; Uses 24-hour temporary blocks instead of permanent
+- &#x1F6E1;&#xFE0F; Focuses on real security threats only
+
+&#x27A1;&#xFE0F; **[Speedtest Server Documentation](docs/SPEEDTEST-SERVER.md)**
+
+
 ## 🚀 Features
 
 - 🔥 Real-time intrusion detection with Suricata IDS
@@ -98,6 +113,15 @@ systemctl start suricata-auto-update.service
 
 # Check timer status
 systemctl status suricata-auto-update.timer
+
+### &#x1F4CA; Enhanced Monitoring (v2.0+)
+
+The new monitoring script shows:
+- &#x1F4C8; Real-time attack statistics
+- &#x1F30D; Proper IPv6 address formatting
+- &#x1F3AF; CSF status for each IP (WHITELISTED/BLOCKED/ACTIVE)
+- &#x1F4CA; Attack categorization and severity distribution
+- &#x23F1;&#xFE0F; Hourly attack timeline
 ```
 
 ## 📊 Monitoring
@@ -206,7 +230,22 @@ For issues and questions:
 
 ---
 
-## Speedtest Server Edition
+
+---
+
+## &#x1F680; Speedtest Server Edition
 
 For Ookla Speedtest servers, use the specialized version that handles high-volume HTTP traffic intelligently.
-See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for details.
+
+### Quick Install for Speedtest Servers:
+```bash
+# Use the speedtest-optimized script
+cp scripts/suricata-csf-block-speedtest.sh /usr/local/bin/
+ln -sf /usr/local/bin/suricata-csf-block-speedtest.sh /usr/local/bin/suricata-csf-block-simple.sh
+
+# Install enhanced monitor
+cp scripts/suricata-monitor-enhanced.py /usr/local/bin/suricata-monitor
+chmod +x /usr/local/bin/suricata-monitor
+```
+
+See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for full details.
