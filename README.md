@@ -4,7 +4,7 @@ A complete solution for automatic intrusion detection and blocking using Suricat
 
 Developed by **Paolo Caparrelli** at **GOLINE SA**
 
-## 🎉 New in Version 2.1.0
+## 🎉 What's New in Version 2.1.0 (June 2025)
 
 ### 🌍 **Geolocation Intelligence**
 - Real-time IP geolocation with country and city information
@@ -135,6 +135,18 @@ The system comes pre-configured with sensible defaults. Main configuration files
 
 ## 🎯 Usage
 
+### ⚡ Verify the System is Running
+
+```bash
+# Check if blocking is active (runs every minute via cron)
+grep suricata /etc/crontab
+
+# Check recent blocks
+tail -f /var/log/suricata-csf-block.log
+
+# NOTE: There is NO systemd service for blocking! It uses cron.
+```
+
 ### 📊 Enhanced Monitoring Dashboard
 
 ```bash
@@ -236,6 +248,25 @@ WARNING: SEVERITY DISTRIBUTION
 ```
 
 ## 🔧 Troubleshooting
+
+### ⚠️ Important: No systemd service for blocking!
+
+The blocking functionality runs via **cron**, NOT systemd. There is NO `suricata-csf-block.service`.
+
+If you see errors about `suricata-csf-block.service`:
+```bash
+# This is WRONG - this service doesn't exist!
+systemctl status suricata-csf-block.service  # ❌ NO!
+
+# Check cron instead - this is correct!
+grep suricata /etc/crontab  # ✅ YES!
+```
+
+To fix if you have the wrong setup:
+```bash
+cd ~/suricata-csf-autoblock
+sudo ./fix-installation.sh
+```
 
 ### Enhanced Diagnostics
 
