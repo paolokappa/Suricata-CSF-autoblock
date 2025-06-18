@@ -2,70 +2,175 @@
 
 ## Prerequisites
 
-Before installing, ensure you have:
+- Ubuntu 22.04 or 24.04
+- Root access
+- ConfigServer Security & Firewall (CSF) installed and configured
+- At least 1GB free disk space
 
-1. **Ubuntu 22.04 or 24.04** server
-2. **CSF (ConfigServer Security & Firewall)** installed and configured
-3. **Root access** to the server
-4. **Network interface** name (usually eth0)
+## Quick Installation
 
-## Installation Steps
+```bash
+# Clone the repository
+git clone https://github.com/paolokappa/Suricata-CSF-autoblock.git
+cd suricata-csf-autoblock
 
-### 1. Install CSF (if not already installed)
+# Run the installer
+sudo ./install.sh
+```
 
-    cd /usr/src
-    wget https://download.configserver.com/csf.tgz
-    tar -xzf csf.tgz
-    cd csf
-    sh install.sh
+## Manual Installation
 
-### 2. Install CSFToAbuseIPDB (Optional - for AbuseIPDB integration)
+### 1. Install Dependencies
 
-    git clone https://github.com/paolokappa/CSFToAbuseIPDB.git
-    cd CSFToAbuseIPDB
-    # Follow the installation instructions in the CSFToAbuseIPDB README
+```bash
+# Update system
+apt-get update
 
-### 3. Clone this repository
+# Install required packages
+apt-get install -y software-properties-common jq python3 python3-pip ipcalc
 
-    git clone https://github.com/goline-sa/suricata-csf-autoblock.git
-    cd suricata-csf-autoblock
+# Install optional Python modules
+pip3 install netifaces  # Optional, for better network detection
+```
 
-### 4. Run the installer
+### 2. Install Suricata
 
-    sudo ./install.sh
+```bash
+# Add Suricata repository
+add-apt-repository -y ppa:oisf/suricata-stable
+apt-get update
 
-### 5. Configure network interface
+# Install Suricata
+apt-get install -y suricata
+```
 
-Edit /etc/suricata/suricata.yaml and update the interface:
+### 3. Configure Suricata
 
-    af-packet:
-      - interface: eth0  # Change this to your interface
+Edit `/etc/suricata/suricata.yaml`:
 
-### 6. Restart Suricata
+```yaml
+# Set your network interface
+af-packet:
+  - interface: eth0  # Change to your interface
 
-    systemctl restart suricata
+# Set your network
+vars:
+  address-groups:
+    HOME_NET: "[192.168.1.0/24,10.0.0.0/8]"  # Your network
+```
 
-### 7. Configure AbuseIPDB (Optional)
+### 4. Install Scripts
 
-If you installed CSFToAbuseIPDB, edit /etc/csf/csf.conf and add your AbuseIPDB API key:
+```bash
+# Choose your version:
+# For standard servers:
+cp scripts/suricata-csf-block-simple.sh /usr/local/bin/
 
-    ABUSEIPDB_KEY = "your_api_key_here"
+# For Speedtest servers:
+cp scripts/suricata-csf-block-speedtest.sh /usr/local/bin/
+ln -sf /usr/local/bin/suricata-csf-block-speedtest.sh /usr/local/bin/suricata-csf-block-simple.sh
+
+# Install other scripts
+cp scripts/suricata-auto-update.sh /usr/local/bin/
+cp scripts/suricata-monitor.py /usr/local/bin/suricata-monitor
+
+# Make executable
+chmod +x /usr/local/bin/suricata-*
+```
+
+### 5. Setup Systemd Services
+
+```bash
+# Copy service files
+cp systemd/*.service systemd/*.timer /etc/systemd/system/
+
+# Reload systemd
+systemctl daemon-reload
+
+# Enable services
+systemctl enable suricata
+systemctl enable suricata-auto-update.timer
+
+# Start services
+systemctl start suricata
+systemctl start suricata-auto-update.timer
+```
+
+### 6. Setup Cron Jobs
+
+Add to `/etc/crontab`:
+
+```bash
+# Suricata auto-block and logrotate
+*/30 * * * * root /usr/sbin/logrotate /etc/logrotate.d/suricata >/dev/null 2>&1
+* * * * * root /usr/local/bin/suricata-csf-block-simple.sh >/dev/null 2>&1
+```
+
+### 7. Setup Log Rotation
+
+```bash
+cp logrotate/suricata /etc/logrotate.d/
+```
+
+### 8. Create Required Directories
+
+```bash
+mkdir -p /var/lib/suricata
+mkdir -p /var/cache/suricata-monitor
+touch /var/log/suricata-csf-block.log
+```
+
+## Post-Installation
+
+### 1. Update Suricata Rules
+
+```bash
+suricata-update
+```
+
+### 2. Configure Trusted IPs (Optional)
+
+Edit `/usr/local/bin/suricata-monitor` and add your admin IPs:
+
+```python
+TRUSTED_IPS = [
+    "YOUR_ADMIN_IP",
+    "MONITORING_SERVER_IP",
+]
+```
+
+### 3. Test the System
+
+```bash
+# Check Suricata is running
+systemctl status suricata
+
+# Test blocking script
+/usr/local/bin/suricata-csf-block-simple.sh
+
+# View monitoring dashboard
+sudo suricata-monitor
+```
+
+## Choosing Your Edition
+
+### Standard Edition
+- Use `suricata-csf-block-simple.sh`
+- Blocks all attacks based on severity
+- Permanent blocks
+
+### Speedtest Server Edition
+- Use `suricata-csf-block-speedtest.sh`
+- Ignores legitimate speedtest traffic
+- 24-hour temporary blocks
+- Recommended for Ookla Speedtest servers
 
 ## Verification
 
-Run these commands to verify the installation:
+Run the verification script:
 
-    # Check Suricata status
-    systemctl status suricata
+```bash
+./check-installation.sh
+```
 
-    # Check auto-update timer
-    systemctl status suricata-auto-update.timer
-
-    # Run the monitor
-    suricata-monitor
-
-    # Check logs
-    tail -f /var/log/suricata-csf-block.log
-
-    # If using AbuseIPDB, check its log
-    tail -f /var/log/csf_abuseipdb.log
+This will verify all components are properly installed and configured.
