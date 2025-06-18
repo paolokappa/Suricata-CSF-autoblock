@@ -4,31 +4,59 @@ A complete solution for automatic intrusion detection and blocking using Suricat
 
 Developed by **Paolo Caparrelli** at **GOLINE SA**
 
+## 🎉 New in Version 2.1.0
 
-## &#x1F3AF; Choose Your Edition
+### 🌍 **Geolocation Intelligence**
+- Real-time IP geolocation with country and city information
+- Intelligent caching system to minimize API requests
+- Geographic distribution analysis of attacks
+- Support for multiple geolocation providers (ip-api.com, ipinfo.io)
 
-### &#x1F310; Standard Edition
-For regular servers that need robust intrusion detection and blocking.
+### 📊 **Advanced Analytics & Anomaly Detection**
+- Historical statistics tracking (30-day retention)
+- Automatic anomaly detection (alerts when traffic exceeds 2x average)
+- Trend analysis with 24-hour and 7-day comparisons
+- Recurring attacker identification
+- New attack type detection
 
-### &#x1F680; Speedtest Server Edition  
-Optimized for Ookla Speedtest servers handling high-volume HTTP traffic.
-- &#x1F3AF; Ignores legitimate speedtest traffic on ports 80, 443, 8080, 5060
-- &#x23F0; Uses 24-hour temporary blocks instead of permanent
-- &#x1F6E1;&#xFE0F; Focuses on real security threats only
+### 🎯 **Enhanced IP Management**
+- **Server IP Detection**: Automatically identifies all server IPs (IPv4/IPv6)
+- **Trusted IP Support**: Define admin/monitoring IPs that won't be blocked
+- **Smart IP Status**: BLOCKED, ACTIVE, WHITELISTED, TRUSTED, SERVER
+- **IPv6 Optimization**: Proper compression and normalization
 
-&#x27A1;&#xFE0F; **[Speedtest Server Documentation](docs/SPEEDTEST-SERVER.md)**
+### 📈 **Detailed Threat Intelligence**
+- **Enhanced Signature Descriptions**: Human-readable attack explanations
+- **ModSecurity Rule Mapping**: Specific descriptions for 50+ ModSecurity rules
+- **Port Service Database**: Detailed service identification for 100+ ports
+- **CSF Block Reason Analysis**: Clear explanations for why IPs were blocked
 
+### 📱 **Professional Monitoring Dashboard**
+- **Attack Timeline**: Hourly visualization of attack patterns
+- **Severity Distribution**: Visual breakdown of HIGH/MEDIUM/LOW threats
+- **Auto-block Effectiveness**: Real-time blocking success metrics
+- **Multi-source Integration**: Combines Suricata alerts, CSF blocks, and system logs
 
 ## 🚀 Features
 
+### Core Features
 - 🔥 Real-time intrusion detection with Suricata IDS
 - 🛡️ Automatic IP blocking based on alert severity
 - 📊 AbuseIPDB integration via CSFToAbuseIPDB
 - ⚡ Automatic Suricata rules updates
-- 📋 Detailed monitoring and reporting
 - ⚙️ Automatic log rotation with logrotate
 - 🔧 Cron-based automation (runs every minute)
 - 🔒 Zero configuration passwords - fully secure
+
+### New Advanced Features
+- 🌍 **Geolocation Analysis**: Track attack origins by country/city
+- 📈 **Historical Analytics**: 30-day statistics with anomaly detection
+- 🎯 **Smart IP Classification**: Server, Trusted, Whitelisted, Active, Blocked
+- 📊 **Professional Reports**: Colored output with graphs and trends
+- 🛡️ **Multi-log Analysis**: Combines Suricata, CSF, and system logs
+- 🔍 **Debug Mode**: Comprehensive system diagnostics
+- 💾 **Intelligent Caching**: Reduces external API calls
+- 🌐 **Full IPv6 Support**: Complete IPv6 handling and formatting
 
 ## 📋 Table of Contents
 
@@ -37,22 +65,26 @@ Optimized for Ookla Speedtest servers handling high-volume HTTP traffic.
 3. [Installation](#-installation)
 4. [Configuration](#-configuration)
 5. [Usage](#-usage)
-6. [Monitoring](#-monitoring)
+6. [Advanced Monitoring](#-advanced-monitoring)
 7. [Troubleshooting](#-troubleshooting)
-8. [Contributing](#-contributing)
-9. [License](#-license)
+8. [API Reference](#-api-reference)
+9. [Contributing](#-contributing)
+10. [License](#-license)
 
 ## 💻 Requirements
 
 - Ubuntu 22.04 or 24.04
 - ConfigServer Security & Firewall (CSF) installed
-- Python 3.x
+- Python 3.x with optional modules:
+  - `netifaces` (for better network interface detection)
+  - `urllib` (for geolocation, included in standard library)
 - jq (JSON processor)
 - Root access
 
-**Optional (for AbuseIPDB integration)**
-- CSFToAbuseIPDB installed
-- AbuseIPDB API key
+**Optional (for enhanced features)**
+- CSFToAbuseIPDB installed for threat intelligence
+- Internet connection for geolocation services
+- 100MB+ disk space for cache and historical data
 
 ## 🚀 Quick Start
 
@@ -63,11 +95,28 @@ cd suricata-csf-autoblock
 
 # Run the installer
 sudo ./install.sh
+
+# View the enhanced monitoring dashboard
+sudo suricata-monitor
 ```
 
 ## 📦 Installation
 
 See [INSTALL.md](docs/INSTALL.md) for detailed installation instructions.
+
+### Post-Installation Configuration
+
+1. **Configure Trusted IPs** (optional):
+   Edit `/usr/local/bin/suricata-monitor` and update the `TRUSTED_IPS` list:
+   ```python
+   TRUSTED_IPS = [
+       "YOUR_ADMIN_IP",      # Your office/home IP
+       "MONITORING_SERVER",  # Your monitoring service
+   ]
+   ```
+
+2. **Enable Geolocation** (enabled by default):
+   The system automatically uses free geolocation services. No API key required!
 
 ## ⚙️ Configuration
 
@@ -76,135 +125,162 @@ The system comes pre-configured with sensible defaults. Main configuration files
 - **Suricata config**: `/etc/suricata/suricata.yaml`
 - **Blocking severity**: Edit `MIN_SEVERITY` in `scripts/suricata-csf-block-simple.sh` (default: 2)
 - **Network interface**: Update in Suricata config
+- **Trusted IPs**: Edit `TRUSTED_IPS` in `/usr/local/bin/suricata-monitor`
 
 ### Severity Levels
 
-- **1** = HIGH (always block)
-- **2** = MEDIUM (default threshold)
-- **3** = LOW (usually false positives)
-
-### AbuseIPDB Integration (Optional)
-
-If you have CSFToAbuseIPDB installed:
-1. Configure your API key in CSFToAbuseIPDB
-2. The integration will work automatically
+- **1** = HIGH (always block) - Critical threats
+- **2** = MEDIUM (default threshold) - Suspicious activity
+- **3** = LOW (usually false positives) - Minor alerts
 
 ## 🎯 Usage
 
-### Manual Blocking Script
+### 📊 Enhanced Monitoring Dashboard
+
+```bash
+# Standard monitoring with all features
+sudo suricata-monitor
+
+# Monitor last 12 hours
+sudo suricata-monitor -H 12
+
+# Disable geolocation (faster, no internet required)
+sudo suricata-monitor --no-geo
+
+# Show all blocked IPs (not just recent)
+sudo suricata-monitor --show-all-blocked
+
+# Debug mode - check log files and configuration
+sudo suricata-monitor --debug
+
+# Clear all caches
+sudo suricata-monitor --clear-cache
+
+# Disable colored output
+sudo suricata-monitor --no-color
+```
+
+### Manual Operations
 
 ```bash
 # Test the blocking script manually
 /usr/local/bin/suricata-csf-block-simple.sh
-```
 
-### Monitor Suricata Events
-
-```bash
-# Real-time monitoring with formatted output
-/usr/local/bin/suricata-monitor
-```
-
-### Update Suricata Rules
-
-```bash
-# Manual update
+# Update Suricata rules
 systemctl start suricata-auto-update.service
-
-# Check timer status
-systemctl status suricata-auto-update.timer
-```
 ```
 
-```
+## 📊 Advanced Monitoring
 
-## 📊 Monitoring
+### Dashboard Overview
 
-### Check Service Status
-
-```bash
-# Suricata status
-systemctl status suricata
-
-# Check if blocking is working
-tail -f /var/log/suricata/csf-blocking.log
-
-# View Suricata alerts
-tail -f /var/log/suricata/fast.log
-```
-
-### &#x1F4CA; Enhanced Monitoring (v2.0+)
-
-The new monitoring script shows:
-- &#x1F4C8; Real-time attack statistics
-- &#x1F30D; Proper IPv6 address formatting
-- &#x1F3AF; CSF status for each IP (WHITELISTED/BLOCKED/ACTIVE)
-- &#x1F4CA; Attack categorization and severity distribution
-- &#x23F1;&#xFE0F; Hourly attack timeline
+The enhanced monitoring dashboard shows:
 
 ```
+================================================================================
+                  SURICATA IDS MONITORING REPORT
+              Last 24 hours - 2025-06-18 10:30
+================================================================================
+
+[GENERAL STATISTICS]
+|- Total alerts: 1,234
+|- Unique IPs detected: 45
+|- Attack types: 12
+`- Average alerts/hour: 51.4
+
+WARNING: SEVERITY DISTRIBUTION
+|- HIGH      [!]  [  234] ############                                     18.9%
+|- MEDIUM    [*]  [  567] ############################                     45.9%
+|- LOW       [-]  [  433] ######################                           35.1%
+
+[TOP 10 ATTACKING IPs]
+#   IP Address                               Country      Alerts     Status       Severity
+1   192.0.2.1                               CN/Beijing   234        [X] BLOCKED   High:10, Med:224
+2   2001:db8::1                             RU/Moscow    189        [!] ACTIVE    High:189
+3   10.0.0.5                                LAN          156        [S] SERVER    Low:156
+...
 ```
 
-### Verify Cron Job
+### Key Features Explained
 
-```bash
-# Check if cron job is installed
-crontab -l | grep suricata-csf-block
+#### 🌍 **Geolocation Intelligence**
+- Shows country code and city for each attacking IP
+- Caches results to minimize API calls
+- Falls back between multiple providers for reliability
+
+#### 📈 **Historical Analysis**
+```
+[HISTORICAL ANALYSIS & ANOMALY DETECTION]
+|- 24h trend: Alerts ↑ 45 | IPs ↑ 12
+|- 🚨 ANOMALY: Alert volume 3.2x higher than 7-day average
+|- New attack types: SSH brute force, SQL injection
+|- Recurring attackers (seen before): 5 IPs
+|- Attack origins: China (45), Russia (23), USA (12)
 ```
 
+#### 🎯 **Smart IP Classification**
+- **[S] SERVER**: Your server's own IPs (never blocked)
+- **[T] TRUSTED**: Admin/monitoring IPs (never blocked)
+- **[OK] WHITELISTED**: IPs in CSF whitelist
+- **[X] BLOCKED**: Successfully blocked by CSF
+- **[!] ACTIVE**: Currently attacking, not yet blocked
+- **[?] UNKNOWN**: Cannot determine status
 
-
-### CSF Blocked IPs
-
-```bash
-# View temporarily blocked IPs
-csf -t
-
-# View permanently blocked IPs
-csf -g [IP_ADDRESS]
+#### 📊 **CSF Integration Metrics**
+```
+[CSF INTEGRATION STATUS]
+|- IPs blocked today: 23
+|- IPs blocked in last 24 hours: 45
+|- Auto-block effectiveness: 45/89 threats blocked (50.6%)
+|- Top blocking countries: CN (23), RU (12), US (8)
 ```
 
 ## 🔧 Troubleshooting
 
-See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues and solutions.
+### Enhanced Diagnostics
 
-### Quick Checks
-
-1. **Suricata not starting?**
+1. **Run debug mode first**:
    ```bash
-   suricata -T -c /etc/suricata/suricata.yaml
+   sudo suricata-monitor --debug
    ```
+   This shows:
+   - All log file locations and sizes
+   - Recent block entries
+   - Server IP addresses
+   - Configuration status
 
-2. **No alerts generated?**
-   ```bash
-   # Test with a known bad pattern
-   curl http://testmynids.org/uid/index.html
-   ```
+2. **Common Issues**:
 
-3. **IPs not being blocked?**
-   - Check `/var/log/suricata/csf-blocking.log`
-   - Verify CSF is running: `systemctl status csf`
-   - Check MIN_SEVERITY setting
+   **Geolocation not working?**
+   - Check internet connection
+   - Try `--no-geo` flag
+   - Clear cache: `sudo suricata-monitor --clear-cache`
 
-4. **Whitelisted IPs still generating alerts?**
-   - This is normal - Suricata still detects and logs them
-   - The blocking script will skip them (check for WHITELISTED in logs)
-   - They won't be blocked in CSF or reported to AbuseIPDB
+   **Wrong IP classification?**
+   - Update TRUSTED_IPS in the script
+   - Check CSF whitelist: `cat /etc/csf/csf.allow`
+   - Verify server IPs in debug mode
 
-5. **Script not processing new logs after rotation?**
-   - Check if position file exists: `ls -la /var/lib/suricata/eve_position_simple`
-   - Position file is automatically reset during log rotation
-   - Manual reset: `rm -f /var/lib/suricata/eve_position_simple`
+   **Missing historical data?**
+   - First run creates baseline
+   - Data builds over 30 days
+   - Check cache directory: `/var/cache/suricata-monitor/`
 
-4. **Whitelisted IPs still generating alerts?**
-   - This is normal - Suricata still detects and logs them
-   - The blocking script will skip them (check for WHITELISTED in logs)
-   - They won't be blocked in CSF or reported to AbuseIPDB
+## 📚 API Reference
 
-5. **Script not processing new logs after rotation?**
-   - Check if position file exists: `ls -la /var/lib/suricata/eve_position_simple`
-   - Position file is automatically reset during log rotation
-   - Manual reset: `rm -f /var/lib/suricata/eve_position_simple`
+### Geolocation Services
+
+The system automatically uses these free services:
+1. **ip-api.com**: 45 requests/minute (primary)
+2. **ipinfo.io**: 50k requests/month (fallback)
+
+No API keys required!
+
+### Cache Files
+
+- **Geolocation**: `/var/cache/suricata-monitor/geo-cache.pkl`
+- **Statistics**: `/var/cache/suricata-monitor/stats-history.json`
+- **Position tracking**: `/var/lib/suricata/eve_position_simple`
 
 ## 🤝 Contributing
 
@@ -216,6 +292,13 @@ Contributions are welcome! Please:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+### Development Guidelines
+
+- Maintain backward compatibility
+- Add descriptions for new signatures/rules
+- Update documentation for new features
+- Test with both IPv4 and IPv6
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -225,6 +308,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Suricata IDS team for the excellent intrusion detection system
 - ConfigServer for CSF firewall
 - AbuseIPDB for threat intelligence integration
+- ip-api.com and ipinfo.io for geolocation services
 
 ## 📞 Support
 
@@ -236,50 +320,15 @@ For issues and questions:
 
 **Made with ❤️ by [GOLINE SA](https://www.goline.ch)**
 
----
+## 🚀 Choose Your Edition
 
+### 🌐 Standard Edition
+For regular servers that need robust intrusion detection and blocking.
 
----
+### 🚀 Speedtest Server Edition  
+Optimized for Ookla Speedtest servers handling high-volume HTTP traffic.
+- 🎯 Ignores legitimate speedtest traffic on ports 80, 443, 8080, 5060
+- ⏰ Uses 24-hour temporary blocks instead of permanent
+- 🛡️ Focuses on real security threats only
 
-## &#x1F680; Speedtest Server Edition
-
-For Ookla Speedtest servers, use the specialized version that handles high-volume HTTP traffic intelligently.
-
-### Quick Install for Speedtest Servers:
-```bash
-# Use the speedtest-optimized script
-cp scripts/suricata-csf-block-speedtest.sh /usr/local/bin/
-ln -sf /usr/local/bin/suricata-csf-block-speedtest.sh /usr/local/bin/suricata-csf-block-simple.sh
-
-# Install enhanced monitor
-cp scripts/suricata-monitor-enhanced.py /usr/local/bin/suricata-monitor
-chmod +x /usr/local/bin/suricata-monitor
-```
-
-See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for full details.
-
----
-
-## &#x1F680; Speedtest Server Edition
-
-For Ookla Speedtest servers, use the specialized version that handles high-volume HTTP traffic intelligently.
-
-### &#x1F4E6; Quick Install for Speedtest Servers:
-```bash
-# Use the speedtest-optimized script
-cp scripts/suricata-csf-block-speedtest.sh /usr/local/bin/
-ln -sf /usr/local/bin/suricata-csf-block-speedtest.sh /usr/local/bin/suricata-csf-block-simple.sh
-
-# Install enhanced monitor
-cp scripts/suricata-monitor-enhanced.py /usr/local/bin/suricata-monitor
-chmod +x /usr/local/bin/suricata-monitor
-```
-
-### &#x1F195; New in v2.0
-- &#x1F30D; Full IPv6 support with proper address formatting
-- &#x1F4CA; Enhanced monitoring with `--debug` and `--show-all-blocked` options
-- &#x1F3AF; Intelligent scoring system for gradual threat detection
-- &#x23F0; Temporary 24h blocks instead of permanent for speedtest servers
-- &#x1F6E1;&#xFE0F; Focus on real threats, ignore legitimate speedtest traffic
-
-See [Speedtest Documentation](docs/SPEEDTEST-SERVER.md) for full details.
+➡️ **[Speedtest Server Documentation](docs/SPEEDTEST-SERVER.md)**
