@@ -1,74 +1,237 @@
 # Troubleshooting Guide
 
-## Common Issues
+## Common Issues and Solutions
 
-### 1. Suricata not starting
+### 1. Suricata Not Starting
 
-**Problem**: systemctl status suricata shows failed state
+**Symptoms:**
+- `systemctl status suricata` shows failed state
+- No alerts being generated
 
-**Solution**:
+**Solutions:**
 
-    # Check configuration
-    suricata -T -c /etc/suricata/suricata.yaml
+```bash
+# Test configuration
+suricata -T -c /etc/suricata/suricata.yaml
 
-    # Check logs
-    journalctl -u suricata -n 50
+# Check logs
+journalctl -u suricata -n 50
 
-### 2. No alerts being generated
+# Common fixes:
+# 1. Wrong interface in config
+# Edit /etc/suricata/suricata.yaml and set correct interface
 
-**Problem**: suricata-monitor shows no alerts
+# 2. Permission issues
+chown -R suricata:suricata /var/log/suricata
+chmod 755 /var/log/suricata
+```
 
-**Solution**:
-- Verify correct network interface in config
-- Check if traffic is reaching the interface
-- Ensure Suricata rules are updated: suricata-update
+### 2. No Alerts Being Generated
 
-### 3. IPs not being blocked
+**Symptoms:**
+- Suricata running but no alerts in logs
+- `/var/log/suricata/eve.json` empty or not growing
 
-**Problem**: Alerts show but IPs are not blocked
+**Solutions:**
 
-**Solution**:
-- Check script logs: tail -50 /var/log/suricata-csf-block.log
-- Verify CSF is running: csf -v
-- Check severity setting in script (default MIN_SEVERITY=2)
+```bash
+# Test with known bad traffic
+curl http://testmynids.org/uid/index.html
 
-### 4. Log file too large
+# Check if interface is correct
+ip link show
+# Update interface in /etc/suricata/suricata.yaml
 
-**Problem**: /var/log/suricata/eve.json is very large
+# Check if rules are loaded
+suricata-update list-sources
+suricata-update
+systemctl restart suricata
+```
 
-**Solution**:
+### 3. IPs Not Being Blocked
 
-    # Force logrotate
-    logrotate -f /etc/logrotate.d/suricata
+**Symptoms:**
+- Alerts showing in logs but IPs not blocked
+- No entries in `/var/log/suricata-csf-block.log`
 
-    # Check logrotate configuration
-    cat /etc/logrotate.d/suricata
+**Solutions:**
 
-### 5. Monitor shows wrong IP status
+```bash
+# Check if cron job exists
+grep suricata /etc/crontab
 
-**Problem**: Blocked IPs show as "ACTIVE"
+# If missing, add it:
+echo "* * * * * root /usr/local/bin/suricata-csf-block-simple.sh >/dev/null 2>&1" >> /etc/crontab
 
-**Solution**:
-- Check CSF status: csf -g IP_ADDRESS
-- Restart monitor after changes
+# Check if CSF is running
+systemctl status csf
+csf -v
 
-## Debug Commands
+# Test blocking script manually
+/usr/local/bin/suricata-csf-block-simple.sh
 
-    # Test block script manually
-    /usr/local/bin/suricata-csf-block-simple.sh
+# Check for errors in log
+tail -f /var/log/suricata-csf-block.log
+```
 
-    # Run script in debug mode
-    bash -x /usr/local/bin/suricata-csf-block-simple.sh
+### 4. Wrong Service Error
 
-    # Check cron execution
-    grep suricata /var/log/syslog | tail -20
+**Error:**
+```
+Unit suricata-csf-block.service not found
+```
 
-    # Reset file position to reprocess
-    rm -f /var/lib/suricata/eve_position_simple
+**Solution:**
+This service doesn't exist! The blocking uses cron, not systemd.
 
-## Log Files
+```bash
+# Remove failed service state
+systemctl reset-failed suricata-csf-block.service
 
-- Suricata alerts: /var/log/suricata/eve.json
-- Block script log: /var/log/suricata-csf-block.log
-- Update log: /var/log/suricata-auto-update.log
-- System log: /var/log/syslog
+# Verify cron is set up correctly
+grep suricata /etc/crontab
+```
+
+### 5. Legitimate Traffic Being Blocked
+
+**Symptoms:**
+- Speedtest servers blocking legitimate tests
+- Admin IPs being blocked
+
+**Solutions:**
+
+```bash
+# For Speedtest servers, use the speedtest version:
+ln -sf /usr/local/bin/suricata-csf-block-speedtest.sh /usr/local/bin/suricata-csf-block-simple.sh
+
+# Whitelist important IPs
+csf -a YOUR_IP "Admin IP - Do not block"
+
+# Add to trusted IPs in monitor
+# Edit /usr/local/bin/suricata-monitor
+```
+
+### 6. High CPU Usage
+
+**Symptoms:**
+- Script consuming too much CPU
+- System slow during processing
+
+**Solutions:**
+
+```bash
+# Check log size
+ls -lh /var/log/suricata/eve.json
+
+# If too large, rotate it
+logrotate -f /etc/logrotate.d/suricata
+
+# Adjust processing frequency
+# Edit /etc/crontab and change from every minute to every 5 minutes:
+# */5 * * * * root /usr/local/bin/suricata-csf-block-simple.sh
+```
+
+### 7. Position File Issues
+
+**Symptoms:**
+- Script not processing new entries after log rotation
+- Same alerts processed multiple times
+
+**Solutions:**
+
+```bash
+# Reset position file
+rm -f /var/lib/suricata/eve_position_simple
+
+# The script will start fresh on next run
+```
+
+### 8. Geolocation Not Working
+
+**Symptoms:**
+- Monitor shows "N/A" for all countries
+- Timeout errors in monitor
+
+**Solutions:**
+
+```bash
+# Run monitor without geolocation
+sudo suricata-monitor --no-geo
+
+# Clear geo cache
+sudo suricata-monitor --clear-cache
+
+# Check internet connectivity
+ping -c 1 ip-api.com
+```
+
+### 9. Memory Issues
+
+**Symptoms:**
+- Out of memory errors
+- Script killed by system
+
+**Solutions:**
+
+```bash
+# Check available memory
+free -h
+
+# Reduce processed IPs cache
+# Edit the script and change:
+# tail -500 to tail -100
+
+# Increase system swap if needed
+```
+
+### 10. CSF Integration Issues
+
+**Symptoms:**
+- CSF commands failing
+- "command not found" errors
+
+**Solutions:**
+
+```bash
+# Verify CSF installation
+which csf
+csf -v
+
+# Reinstall CSF if needed
+cd /usr/src
+wget https://download.configserver.com/csf.tgz
+tar -xzf csf.tgz
+cd csf
+sh install.sh
+```
+
+## Debug Mode
+
+For comprehensive diagnostics:
+
+```bash
+# Run installation check
+./check-installation.sh
+
+# Run monitor in debug mode
+sudo suricata-monitor --debug
+
+# Check all logs
+tail -f /var/log/suricata/*.log /var/log/suricata-csf-block.log
+```
+
+## Getting Help
+
+1. Check the logs first:
+   - `/var/log/suricata/suricata.log`
+   - `/var/log/suricata-csf-block.log`
+   - `journalctl -u suricata`
+
+2. Run debug scripts:
+   - `./check-installation.sh`
+   - `suricata-monitor --debug`
+
+3. Open an issue on GitHub with:
+   - Error messages
+   - Output of debug scripts
+   - Your configuration
