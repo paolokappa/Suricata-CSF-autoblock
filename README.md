@@ -1,4 +1,11 @@
-# 🛡️ Suricata IDS + CSF Firewall Auto-Block System
+# ??? Suricata IDS + CSF Firewall Auto-Block System
+
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Ubuntu](https://img.shields.io/badge/ubuntu-22.04%20%7C%2024.04-orange.svg)
+![Suricata](https://img.shields.io/badge/suricata-7.x-red.svg)
+![Python](https://img.shields.io/badge/python-3.x-yellow.svg)
+
 
 A complete solution for automatic intrusion detection and blocking using Suricata IDS and ConfigServer Security & Firewall (CSF).
 

@@ -1,0 +1,12 @@
+# Linguist overrides
+*.py linguist-language=Python
+*.sh linguist-language=Shell
+docs/* linguist-documentation
+examples/* linguist-documentation
+
+# Line endings
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
