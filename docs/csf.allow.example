@@ -1,0 +1,31 @@
+# Example CSF allow file for Suricata integration
+# Copy entries to /etc/csf/csf.allow
+
+# Office/Admin IPs - Never block these
+192.168.1.0/24 # Office network - do not remove
+203.0.113.10 # Admin home IP - static
+
+# Monitoring services  
+198.51.100.0/28 # Monitoring service subnet
+2001:db8:1234::/48 # IPv6 monitoring range
+
+# Critical services
+10.0.0.5 # Internal monitoring server
+172.16.0.100 # Backup server - needs full access
+
+# CDN/Proxy services (be careful with these)
+104.16.0.0/12 # Cloudflare ranges
+172.64.0.0/13 # Cloudflare ranges
+
+# Speedtest servers (for Speedtest Server Edition)
+151.101.2.219 # Ookla server
+198.41.0.4 # Ookla root server
+
+# Partner services
+203.0.113.50 # Important partner - Project X
+
+# Note: IPs in this file will:
+# - Never be blocked by CSF
+# - Show as WHITELISTED in suricata-monitor
+# - Still generate Suricata alerts (for logging)
+# - But blocking will be skipped with "WHITELISTED" message in logs
