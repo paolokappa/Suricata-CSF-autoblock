@@ -1,4 +1,4 @@
-# ??? Suricata IDS + CSF Firewall Auto-Block System
+# Suricata IDS + CSF Firewall Auto-Block System
 
 ![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
